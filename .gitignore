@@ -1,0 +1,11 @@
+.firecrawl/
+PIL暑期小项目.pdf
+docs/superpowers/specs/
+outputs/
+data/
+.ipynb_checkpoints/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.pt
+*.pth
