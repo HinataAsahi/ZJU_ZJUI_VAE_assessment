@@ -13,7 +13,14 @@ def build_dataset(name: str, root: str, train: bool, download: bool = True, limi
         dataset = datasets.FashionMNIST(root=root, train=train, transform=transform, download=download)
     elif normalized_name == "fake":
         size = 128 if train else 64
-        dataset = datasets.FakeData(size=size, image_size=(1, 28, 28), num_classes=10, transform=transform)
+        random_offset = 0 if train else 10_000
+        dataset = datasets.FakeData(
+            size=size,
+            image_size=(1, 28, 28),
+            num_classes=10,
+            transform=transform,
+            random_offset=random_offset,
+        )
     else:
         raise ValueError("dataset must be one of: mnist, fashion_mnist, fake")
 

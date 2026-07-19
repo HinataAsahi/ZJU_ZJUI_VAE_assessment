@@ -91,15 +91,16 @@ PYTHONPATH=src pytest -v
 
 The report should compare `beta=1` and `beta=0` using:
 
-- test total loss,
 - test reconstruction loss,
 - test KL loss,
 - reconstruction grids,
 - prior sampling grids,
 - loss curves.
 
+Do not compare `test_total` directly across beta values: each objective weights the KL term differently. Compare reconstruction loss, KL loss, generated samples, and qualitative grids instead.
+
 The analysis should explain the tradeoff: removing KL usually helps reconstruction but damages the match between encoded latent vectors and the standard normal prior, so random prior samples become less reliable.
 
 ## Git Hygiene
 
-The repository ignores local data, outputs, checkpoints, and internal planning notes. Generated files under `outputs/` are not committed unless a small selected figure is copied into a report directory for final submission.
+The repository ignores local data, outputs, checkpoints, and internal planning notes. Generated files under `outputs/` remain local and must not be committed to public Git history.

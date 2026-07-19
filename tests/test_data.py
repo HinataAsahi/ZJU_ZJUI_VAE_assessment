@@ -15,6 +15,16 @@ def test_fake_dataset_limit_and_shape(tmp_path):
     assert isinstance(label, int)
 
 
+def test_fake_train_and_test_samples_differ_at_same_index(tmp_path):
+    train_dataset = build_dataset("fake", root=str(tmp_path), train=True, download=False)
+    test_dataset = build_dataset("fake", root=str(tmp_path), train=False, download=False)
+
+    train_image, train_label = train_dataset[0]
+    test_image, test_label = test_dataset[0]
+
+    assert not torch.equal(train_image, test_image) or train_label != test_label
+
+
 def test_get_dataloaders_returns_batches(tmp_path):
     config = {
         "dataset": "fake",
