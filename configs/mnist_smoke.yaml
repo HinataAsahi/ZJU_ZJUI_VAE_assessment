@@ -1,0 +1,17 @@
+run_name: mnist_smoke
+dataset: fake
+data_dir: data
+output_dir: outputs/mnist_smoke
+batch_size: 32
+epochs: 1
+learning_rate: 0.001
+seed: 42
+device: cpu
+beta: 1.0
+latent_dim: 8
+hidden_dims: [128, 64]
+train_limit: 128
+test_limit: 64
+num_workers: 0
+download: false
+sample_count: 16
