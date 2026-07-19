@@ -2,13 +2,15 @@
 
 This repository contains a learning-first PyTorch implementation of a small Variational Autoencoder (VAE) for the PIL Lab 2026 summer assessment.
 
-The first goal is to understand the VAE pipeline:
+## What This Project Builds
 
-1. encode an image into `mu` and `logvar`,
-2. sample a latent vector with the reparameterization trick,
-3. decode the latent vector into an image,
-4. optimize reconstruction loss plus `beta * KL(q(z|x) || p(z))`,
-5. compare `beta=1` with `beta=0`.
+The code implements a small MLP VAE for MNIST-style 28x28 grayscale images. It supports:
+
+- training and test evaluation,
+- image reconstruction,
+- prior sampling from `N(0, I)`,
+- loss logging for total loss, reconstruction loss, and KL loss,
+- the required comparison between `beta=1` and `beta=0`.
 
 ## Setup
 
@@ -18,26 +20,48 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-For an existing PyTorch environment, install only the missing packages from `requirements.txt`.
+If PyTorch is already installed, keep the existing PyTorch build and install any missing packages from `requirements.txt`.
 
-## Learning Path
+## First Learning Step
 
-Start with:
+Open:
 
 ```text
 notebooks/01_vae_basics.ipynb
 ```
 
-Then use the CLI scripts for reproducible runs.
+Read it in order. The notebook introduces:
 
-## Quick Smoke Test
+1. why VAE is different from a plain autoencoder,
+2. why the encoder outputs `mu` and `logvar`,
+3. how `z = mu + std * eps` keeps sampling differentiable,
+4. why the loss is reconstruction plus `beta * KL`,
+5. why `beta=0` can reconstruct well but sample poorly.
+
+## Local Smoke Test
+
+The smoke config uses `FakeData`, so it does not download MNIST or Fashion-MNIST:
 
 ```bash
 PYTHONPATH=src python scripts/train.py --config configs/mnist_smoke.yaml
-PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/mnist_smoke
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/mnist_smoke --device cpu
 ```
 
-## Required Experiments
+Expected generated files:
+
+```text
+outputs/mnist_smoke/checkpoint.pt
+outputs/mnist_smoke/config.json
+outputs/mnist_smoke/metrics.json
+outputs/mnist_smoke/evaluation.json
+outputs/mnist_smoke/figures/reconstructions.png
+outputs/mnist_smoke/figures/prior_samples.png
+outputs/mnist_smoke/figures/loss_curves.png
+```
+
+## Required Fashion-MNIST Experiments
+
+Run these on a GPU machine when possible.
 
 Standard VAE:
 
@@ -53,4 +77,25 @@ PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0.yaml
 PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0 --device auto
 ```
 
-Generated outputs are written under `outputs/` and are not tracked by Git.
+## Tests
+
+```bash
+PYTHONPATH=src pytest -v
+```
+
+## Notes For The Report
+
+The report should compare `beta=1` and `beta=0` using:
+
+- test total loss,
+- test reconstruction loss,
+- test KL loss,
+- reconstruction grids,
+- prior sampling grids,
+- loss curves.
+
+The analysis should explain the tradeoff: removing KL usually helps reconstruction but damages the match between encoded latent vectors and the standard normal prior, so random prior samples become less reliable.
+
+## Git Hygiene
+
+The repository ignores local data, outputs, checkpoints, and internal planning notes. Generated files under `outputs/` are not committed unless a small selected figure is copied into a report directory for final submission.
