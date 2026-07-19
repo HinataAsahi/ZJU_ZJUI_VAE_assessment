@@ -11,17 +11,24 @@ def test_educational_notebook_exists_and_has_required_sections():
 
     data = json.loads(notebook_path.read_text(encoding="utf-8"))
     assert data["nbformat"] == 4
+    assert len(data["cells"]) >= 45
     joined_source = "\n".join("".join(cell.get("source", [])) for cell in data["cells"])
 
     required_phrases = [
-        "VAE 要解决什么问题",
-        "Encoder 输出 mu 和 logvar",
-        "重参数化技巧",
-        "ELBO 损失",
-        "训练一个小型 VAE",
-        "重构测试图像",
-        "从先验分布采样",
-        "beta=1 和 beta=0",
+        "从 Autoencoder 到 VAE：为什么普通 AE 不能自然生成",
+        "概率建模直觉：`z`、`p(z)`、`q(z|x)`、`p(x|z)` 分别是什么",
+        "Encoder 为什么输出 `mu` 和 `logvar`",
+        "重参数化技巧为什么能让采样参与反向传播",
+        "ELBO 直觉：重构项和 KL 项各自在约束什么",
+        "KL 公式和代码如何对应",
+        "BCE reconstruction loss、logits、sigmoid 的关系",
+        "训练循环逐步拆解：forward、loss、backward、optimizer",
+        "重构图怎么看",
+        "先验采样图怎么看",
+        "`beta=1` vs `beta=0` 运行前应该预期什么",
+        "如何从 FakeData 切到 MNIST，再切到 Fashion-MNIST",
+        "常见问题：posterior collapse、KL 太小/太大、采样差但重构好",
+        "读完后你应该能回答的问题",
         "`fake`（FakeData）只用于离线 smoke/学习",
         "`mnist`（MNIST）用于真实数据上的代码调试",
         "`fashion_mnist`（Fashion-MNIST）是作业要求的主实验/正式实验数据集",
