@@ -19,6 +19,9 @@ def test_educational_notebook_exists_and_has_required_sections():
         "重构测试图像",
         "从先验分布采样",
         "beta=1 和 beta=0",
+        "`fake`（FakeData）只用于离线 smoke/学习",
+        "`mnist`（MNIST）用于真实数据上的代码调试",
+        "`fashion_mnist`（Fashion-MNIST）是作业要求的主实验/正式实验数据集",
     ]
     for phrase in required_phrases:
         assert phrase in joined_source

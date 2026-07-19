@@ -39,7 +39,11 @@ cells = [
         "from vae_project.utils import select_device, set_seed\n"
         "from vae_project.visualization import save_prior_samples, save_reconstruction_grid\n"
     ),
-    markdown("## 数据设置\n\n先用 `fake` 数据跑通流程，之后把 `dataset` 改成 `mnist` 或 `fashion_mnist`。图像保持在 `[0, 1]`，所以可以使用 Bernoulli/BCE 风格的重构损失。\n"),
+    markdown(
+        "## 数据设置\n\n"
+        "默认的 `dataset: 'fake'` 使用 FakeData；`fake`（FakeData）只用于离线 smoke/学习，方便在没有下载数据时跑通 notebook。需要在真实数据上调试代码时，把 `dataset` 改成 `mnist`；`mnist`（MNIST）用于真实数据上的代码调试。作业的主实验/正式实验必须使用 `fashion_mnist`；`fashion_mnist`（Fashion-MNIST）是作业要求的主实验/正式实验数据集，并应在此数据集上比较不同 beta。\n"
+        "图像保持在 `[0, 1]`，所以可以使用 Bernoulli/BCE 风格的重构损失。\n"
+    ),
     code(
         "config = validate_config({\n"
         "    'run_name': 'notebook_smoke',\n"
