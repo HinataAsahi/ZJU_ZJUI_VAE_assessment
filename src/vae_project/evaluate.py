@@ -11,6 +11,14 @@ from vae_project.utils import ensure_dir, save_json, select_device
 from vae_project.visualization import save_loss_curves, save_prior_samples, save_reconstruction_grid
 
 
+def make_prior_latents(
+    latent_dim: int, sample_count: int, seed: int, device: torch.device
+) -> torch.Tensor:
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(seed)
+    return torch.randn(sample_count, latent_dim, generator=generator).to(device)
+
+
 def load_checkpoint(run_dir: str | Path, device: torch.device) -> tuple[MLPVAE, dict, list[dict[str, float]]]:
     checkpoint_path = Path(run_dir) / "checkpoint.pt"
     if not checkpoint_path.exists():
@@ -31,7 +39,20 @@ def evaluate_run(run_dir: str | Path, device: str = "auto") -> dict:
     metrics = evaluate_epoch(model, test_loader, selected_device, beta=float(config["beta"]))
     figures_dir = ensure_dir(Path(run_dir) / "figures")
     save_reconstruction_grid(model, test_loader, selected_device, figures_dir / "reconstructions.png", max_images=8)
-    save_prior_samples(model, selected_device, figures_dir / "prior_samples.png", sample_count=int(config.get("sample_count", 64)))
+    sample_count = int(config.get("sample_count", 64))
+    prior_latents = make_prior_latents(
+        latent_dim=int(config["latent_dim"]),
+        sample_count=sample_count,
+        seed=int(config["seed"]),
+        device=selected_device,
+    )
+    save_prior_samples(
+        model,
+        selected_device,
+        figures_dir / "prior_samples.png",
+        sample_count=sample_count,
+        latents=prior_latents,
+    )
     save_loss_curves(history, figures_dir / "loss_curves.png")
     summary = {
         "test_total": metrics["total"],

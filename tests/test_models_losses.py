@@ -27,6 +27,31 @@ def test_reparameterize_eval_uses_mu():
     assert torch.equal(z, mu)
 
 
+def test_reparameterize_can_sample_in_eval_mode():
+    model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
+    model.eval()
+    mu = torch.ones(2, 3)
+    logvar = torch.zeros(2, 3)
+    torch.manual_seed(17)
+    expected = mu + torch.randn_like(mu)
+
+    torch.manual_seed(17)
+    z = model.reparameterize(mu, logvar, sample=True)
+
+    assert torch.equal(z, expected)
+
+
+def test_reparameterize_can_use_mu_in_train_mode():
+    model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
+    model.train()
+    mu = torch.ones(2, 3)
+    logvar = torch.zeros(2, 3)
+
+    z = model.reparameterize(mu, logvar, sample=False)
+
+    assert torch.equal(z, mu)
+
+
 def test_kl_zero_for_standard_normal_posterior():
     mu = torch.zeros(7, 4)
     logvar = torch.zeros(7, 4)

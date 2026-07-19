@@ -38,6 +38,10 @@ Read it in order. The notebook introduces:
 4. why the loss is reconstruction plus `beta * KL`,
 5. why `beta=0` can reconstruct well but sample poorly.
 
+Launch Jupyter from the repository root or the `notebooks/` directory. The first
+code cell locates the repository and adds `src/` to Python's import path, so the
+notebook does not require a separate `PYTHONPATH` setting.
+
 ## Local Smoke Test
 
 The smoke config uses `FakeData`, so it does not download MNIST or Fashion-MNIST:

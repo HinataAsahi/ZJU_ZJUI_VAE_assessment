@@ -8,7 +8,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import torch
-from torchvision.utils import make_grid, save_image
+from torchvision.utils import save_image
 
 from vae_project.utils import ensure_dir
 
@@ -20,7 +20,7 @@ def save_reconstruction_grid(
     model.eval()
     images, _labels = next(iter(loader))
     images = images[:max_images].to(device)
-    output = model(images)
+    output = model(images, sample=False)
     recon = torch.sigmoid(output["recon_logits"])
     comparison = torch.cat([images.cpu(), recon.cpu()], dim=0)
     output_path = Path(path)
@@ -30,14 +30,18 @@ def save_reconstruction_grid(
 
 @torch.no_grad()
 def save_prior_samples(
-    model: torch.nn.Module, device: torch.device, path: str | Path, sample_count: int = 64
+    model: torch.nn.Module,
+    device: torch.device,
+    path: str | Path,
+    sample_count: int = 64,
+    latents: torch.Tensor | None = None,
 ) -> None:
     model.eval()
-    z = torch.randn(sample_count, model.latent_dim, device=device)
+    z = torch.randn(sample_count, model.latent_dim, device=device) if latents is None else latents.to(device)
     samples = torch.sigmoid(model.decode(z)).cpu()
     output_path = Path(path)
     ensure_dir(output_path.parent)
-    nrow = int(sample_count ** 0.5)
+    nrow = int(z.shape[0] ** 0.5)
     save_image(samples, output_path, nrow=max(nrow, 1))
 
 

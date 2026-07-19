@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -25,3 +28,22 @@ def test_educational_notebook_exists_and_has_required_sections():
     ]
     for phrase in required_phrases:
         assert phrase in joined_source
+
+
+def test_notebook_import_cell_works_without_pythonpath(tmp_path):
+    notebook_path = Path("notebooks/01_vae_basics.ipynb")
+    data = json.loads(notebook_path.read_text(encoding="utf-8"))
+    import_cell = next(cell for cell in data["cells"] if cell["cell_type"] == "code")
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    env["MPLCONFIGDIR"] = str(tmp_path / "mpl")
+
+    result = subprocess.run(
+        [sys.executable, "-c", "".join(import_cell["source"])],
+        cwd=notebook_path.parent,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr

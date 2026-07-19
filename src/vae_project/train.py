@@ -42,7 +42,7 @@ def evaluate_epoch(model: torch.nn.Module, loader, device: torch.device, beta: f
     count = 0
     for images, _labels in loader:
         images = images.to(device)
-        output = model(images)
+        output = model(images, sample=True)
         losses = vae_loss(output["recon_logits"], images, output["mu"], output["logvar"], beta=beta)
         batch_size = images.shape[0]
         count += batch_size

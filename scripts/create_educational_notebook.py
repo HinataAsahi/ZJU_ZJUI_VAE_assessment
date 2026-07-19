@@ -28,7 +28,18 @@ cells = [
         "普通 autoencoder 学到的是把输入压缩再重构。VAE 额外要求潜变量来自一个可采样的概率空间。这样训练结束后，我们可以从先验分布 `N(0, I)` 采样 latent vector，再用 decoder 生成新图像。\n"
     ),
     code(
+        "import sys\n"
         "from pathlib import Path\n"
+        "for candidate in (Path.cwd(), *Path.cwd().parents):\n"
+        "    if (candidate / 'src' / 'vae_project').is_dir():\n"
+        "        project_root = candidate\n"
+        "        break\n"
+        "else:\n"
+        "    raise FileNotFoundError('Could not locate the repository root containing src/vae_project')\n"
+        "src_path = str(project_root / 'src')\n"
+        "if src_path not in sys.path:\n"
+        "    sys.path.insert(0, src_path)\n"
+        "\n"
         "import matplotlib.pyplot as plt\n"
         "import torch\n"
         "from vae_project.config import validate_config\n"

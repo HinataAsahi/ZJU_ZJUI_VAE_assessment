@@ -37,8 +37,11 @@ class MLPVAE(nn.Module):
         h = self.encoder(x.view(x.shape[0], -1))
         return self.mu(h), self.logvar(h)
 
-    def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
-        if not self.training:
+    def reparameterize(
+        self, mu: torch.Tensor, logvar: torch.Tensor, sample: bool | None = None
+    ) -> torch.Tensor:
+        should_sample = self.training if sample is None else sample
+        if not should_sample:
             return mu
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
@@ -48,8 +51,8 @@ class MLPVAE(nn.Module):
         logits = self.decoder(z)
         return logits.view(z.shape[0], *self.input_shape)
 
-    def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
+    def forward(self, x: torch.Tensor, sample: bool | None = None) -> dict[str, torch.Tensor]:
         mu, logvar = self.encode(x)
-        z = self.reparameterize(mu, logvar)
+        z = self.reparameterize(mu, logvar, sample=sample)
         recon_logits = self.decode(z)
         return {"recon_logits": recon_logits, "mu": mu, "logvar": logvar, "z": z}
