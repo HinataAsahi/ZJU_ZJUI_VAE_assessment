@@ -41,6 +41,22 @@ def test_reparameterize_can_sample_in_eval_mode():
     assert torch.equal(z, expected)
 
 
+def test_reparameterize_uses_local_generator_when_provided():
+    model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
+    model.eval()
+    mu = torch.ones(2, 3)
+    logvar = torch.zeros(2, 3)
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(17)
+
+    z = model.reparameterize(mu, logvar, sample=True, generator=generator)
+    torch.manual_seed(999_999)
+    generator.manual_seed(17)
+    repeated = model.reparameterize(mu, logvar, sample=True, generator=generator)
+
+    assert torch.equal(repeated, z)
+
+
 def test_reparameterize_can_use_mu_in_train_mode():
     model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
     model.train()

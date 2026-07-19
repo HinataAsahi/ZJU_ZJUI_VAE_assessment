@@ -38,21 +38,30 @@ class MLPVAE(nn.Module):
         return self.mu(h), self.logvar(h)
 
     def reparameterize(
-        self, mu: torch.Tensor, logvar: torch.Tensor, sample: bool | None = None
+        self,
+        mu: torch.Tensor,
+        logvar: torch.Tensor,
+        sample: bool | None = None,
+        generator: torch.Generator | None = None,
     ) -> torch.Tensor:
         should_sample = self.training if sample is None else sample
         if not should_sample:
             return mu
         std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
+        if generator is None:
+            eps = torch.randn_like(std)
+        else:
+            eps = torch.randn(std.shape, generator=generator, device="cpu", dtype=std.dtype).to(std.device)
         return mu + std * eps
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         logits = self.decoder(z)
         return logits.view(z.shape[0], *self.input_shape)
 
-    def forward(self, x: torch.Tensor, sample: bool | None = None) -> dict[str, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, sample: bool | None = None, generator: torch.Generator | None = None
+    ) -> dict[str, torch.Tensor]:
         mu, logvar = self.encode(x)
-        z = self.reparameterize(mu, logvar, sample=sample)
+        z = self.reparameterize(mu, logvar, sample=sample, generator=generator)
         recon_logits = self.decode(z)
         return {"recon_logits": recon_logits, "mu": mu, "logvar": logvar, "z": z}

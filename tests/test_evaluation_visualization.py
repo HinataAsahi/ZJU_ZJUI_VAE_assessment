@@ -7,6 +7,7 @@ from vae_project.config import validate_config
 from vae_project.evaluate import evaluate_run
 from vae_project.models import MLPVAE
 from vae_project.train import evaluate_epoch, fit
+from vae_project.utils import load_json
 from vae_project.visualization import save_reconstruction_grid
 
 
@@ -15,9 +16,11 @@ class RecordingMLPVAE(MLPVAE):
         super().__init__(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
         self.sample_requests: list[bool | None] = []
 
-    def forward(self, x: torch.Tensor, sample: bool | None = None) -> dict[str, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, sample: bool | None = None, generator: torch.Generator | None = None
+    ) -> dict[str, torch.Tensor]:
         self.sample_requests.append(sample)
-        return super().forward(x, sample=sample)
+        return super().forward(x, sample=sample, generator=generator)
 
 
 def make_loader() -> DataLoader:
@@ -32,6 +35,17 @@ def test_evaluate_epoch_requests_sampled_latents():
     evaluate_epoch(model, make_loader(), torch.device("cpu"), beta=1.0)
 
     assert model.sample_requests == [True, True]
+
+
+def test_evaluate_epoch_reproduces_sampled_metrics_for_same_seed():
+    model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=[16], latent_dim=3)
+    loader = make_loader()
+
+    first = evaluate_epoch(model, loader, torch.device("cpu"), beta=1.0, sample_seed=17)
+    torch.manual_seed(999_999)
+    second = evaluate_epoch(model, loader, torch.device("cpu"), beta=1.0, sample_seed=17)
+
+    assert second == first
 
 
 def test_reconstruction_grid_requests_posterior_mean(tmp_path):
@@ -103,3 +117,37 @@ def test_evaluate_run_reproduces_prior_samples_for_same_seed(tmp_path):
     evaluate_run(config["output_dir"], device="cpu")
 
     assert prior_path.read_bytes() == first
+
+
+def test_evaluate_run_reproduces_sampled_metrics_for_same_seed(tmp_path):
+    config = validate_config(
+        {
+            "run_name": "deterministic_metrics",
+            "dataset": "fake",
+            "data_dir": str(tmp_path / "data"),
+            "output_dir": str(tmp_path / "outputs" / "deterministic_metrics"),
+            "batch_size": 8,
+            "epochs": 1,
+            "seed": 31,
+            "device": "cpu",
+            "beta": 1.0,
+            "latent_dim": 4,
+            "hidden_dims": [32],
+            "train_limit": 16,
+            "test_limit": 8,
+            "download": False,
+            "sample_count": 16,
+        }
+    )
+    fit(config)
+
+    run_dir = Path(config["output_dir"])
+    evaluate_run(config["output_dir"], device="cpu")
+    first = load_json(run_dir / "evaluation.json")
+    torch.manual_seed(999_999)
+    evaluate_run(config["output_dir"], device="cpu")
+    second = load_json(run_dir / "evaluation.json")
+
+    assert second["test_total"] == first["test_total"]
+    assert second["test_reconstruction"] == first["test_reconstruction"]
+    assert second["test_kl"] == first["test_kl"]

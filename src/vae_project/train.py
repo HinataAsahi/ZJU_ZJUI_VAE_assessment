@@ -36,13 +36,22 @@ def train_one_epoch(
 
 
 @torch.no_grad()
-def evaluate_epoch(model: torch.nn.Module, loader, device: torch.device, beta: float) -> dict[str, float]:
+def evaluate_epoch(
+    model: torch.nn.Module, loader, device: torch.device, beta: float, sample_seed: int | None = None
+) -> dict[str, float]:
     model.eval()
     totals = {"total": 0.0, "reconstruction": 0.0, "kl": 0.0}
     count = 0
+    generator = None
+    if sample_seed is not None:
+        generator = torch.Generator(device="cpu")
+        generator.manual_seed(sample_seed)
     for images, _labels in loader:
         images = images.to(device)
-        output = model(images, sample=True)
+        if generator is None:
+            output = model(images, sample=True)
+        else:
+            output = model(images, sample=True, generator=generator)
         losses = vae_loss(output["recon_logits"], images, output["mu"], output["logvar"], beta=beta)
         batch_size = images.shape[0]
         count += batch_size
@@ -67,7 +76,13 @@ def fit(config: dict) -> dict:
     for epoch in range(1, int(config["epochs"]) + 1):
         started = perf_counter()
         train_metrics = train_one_epoch(model, train_loader, optimizer, device, beta=float(config["beta"]))
-        test_metrics = evaluate_epoch(model, test_loader, device, beta=float(config["beta"]))
+        test_metrics = evaluate_epoch(
+            model,
+            test_loader,
+            device,
+            beta=float(config["beta"]),
+            sample_seed=int(config["seed"]) + epoch,
+        )
         elapsed = perf_counter() - started
         row = {
             "epoch": epoch,

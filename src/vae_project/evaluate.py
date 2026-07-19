@@ -36,7 +36,9 @@ def evaluate_run(run_dir: str | Path, device: str = "auto") -> dict:
     selected_device = select_device(device)
     model, config, history = load_checkpoint(run_dir, selected_device)
     _train_loader, test_loader = get_dataloaders(config)
-    metrics = evaluate_epoch(model, test_loader, selected_device, beta=float(config["beta"]))
+    metrics = evaluate_epoch(
+        model, test_loader, selected_device, beta=float(config["beta"]), sample_seed=int(config["seed"])
+    )
     figures_dir = ensure_dir(Path(run_dir) / "figures")
     save_reconstruction_grid(model, test_loader, selected_device, figures_dir / "reconstructions.png", max_images=8)
     sample_count = int(config.get("sample_count", 64))
