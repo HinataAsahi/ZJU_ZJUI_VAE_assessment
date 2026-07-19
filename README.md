@@ -1,5 +1,7 @@
 # ZJU ZJUI VAE Assessment
 
+[中文说明](README.zh-CN.md)
+
 This repository contains a learning-first PyTorch implementation of a small Variational Autoencoder (VAE) for the PIL Lab 2026 summer assessment.
 
 ## What This Project Builds
