@@ -1,0 +1,136 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+def markdown(source: str) -> dict:
+    return {"cell_type": "markdown", "metadata": {}, "source": source.splitlines(keepends=True)}
+
+
+def code(source: str) -> dict:
+    return {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": source.splitlines(keepends=True),
+    }
+
+
+cells = [
+    markdown(
+        "# 01 VAE Basics\n\n"
+        "这个 notebook 用一个小型 MLP VAE 帮助理解作业中的基础内容。目标不是先追求漂亮图片，而是看清楚 encoder、潜变量、重参数化、decoder、重构损失和 KL 正则化之间的关系。\n"
+    ),
+    markdown(
+        "## VAE 要解决什么问题\n\n"
+        "普通 autoencoder 学到的是把输入压缩再重构。VAE 额外要求潜变量来自一个可采样的概率空间。这样训练结束后，我们可以从先验分布 `N(0, I)` 采样 latent vector，再用 decoder 生成新图像。\n"
+    ),
+    code(
+        "from pathlib import Path\n"
+        "import matplotlib.pyplot as plt\n"
+        "import torch\n"
+        "from vae_project.config import validate_config\n"
+        "from vae_project.data import get_dataloaders\n"
+        "from vae_project.models import MLPVAE\n"
+        "from vae_project.losses import vae_loss\n"
+        "from vae_project.train import train_one_epoch, evaluate_epoch\n"
+        "from vae_project.utils import select_device, set_seed\n"
+        "from vae_project.visualization import save_prior_samples, save_reconstruction_grid\n"
+    ),
+    markdown("## 数据设置\n\n先用 `fake` 数据跑通流程，之后把 `dataset` 改成 `mnist` 或 `fashion_mnist`。图像保持在 `[0, 1]`，所以可以使用 Bernoulli/BCE 风格的重构损失。\n"),
+    code(
+        "config = validate_config({\n"
+        "    'run_name': 'notebook_smoke',\n"
+        "    'dataset': 'fake',\n"
+        "    'data_dir': 'data',\n"
+        "    'output_dir': 'outputs/notebook_smoke',\n"
+        "    'batch_size': 32,\n"
+        "    'epochs': 1,\n"
+        "    'learning_rate': 1e-3,\n"
+        "    'seed': 42,\n"
+        "    'device': 'auto',\n"
+        "    'beta': 1.0,\n"
+        "    'latent_dim': 8,\n"
+        "    'hidden_dims': [128, 64],\n"
+        "    'train_limit': 128,\n"
+        "    'test_limit': 64,\n"
+        "    'num_workers': 0,\n"
+        "    'download': False,\n"
+        "    'sample_count': 16,\n"
+        "})\n"
+        "set_seed(config['seed'])\n"
+        "device = select_device(config['device'])\n"
+        "train_loader, test_loader = get_dataloaders(config)\n"
+        "device\n"
+    ),
+    markdown("## Encoder 输出 mu 和 logvar\n\nEncoder 不直接输出一个固定 latent vector，而是输出近似后验 `q_phi(z|x)` 的均值 `mu` 和对数方差 `logvar`。这样每张图像对应的是一个分布，而不是单个点。\n"),
+    code(
+        "model = MLPVAE(input_shape=(1, 28, 28), hidden_dims=config['hidden_dims'], latent_dim=config['latent_dim']).to(device)\n"
+        "images, labels = next(iter(train_loader))\n"
+        "images = images.to(device)\n"
+        "mu, logvar = model.encode(images)\n"
+        "mu.shape, logvar.shape\n"
+    ),
+    markdown("## 重参数化技巧\n\n直接从 `N(mu, sigma^2)` 采样会阻断梯度路径。VAE 写成 `z = mu + std * eps`，其中 `eps ~ N(0, I)`。随机性来自 `eps`，梯度可以通过 `mu` 和 `std` 回传。\n"),
+    code(
+        "model.train()\n"
+        "z = model.reparameterize(mu, logvar)\n"
+        "recon_logits = model.decode(z)\n"
+        "z.shape, recon_logits.shape\n"
+    ),
+    markdown("## ELBO 损失\n\n作业目标可以写成重构项加 `beta * KL(q(z|x) || p(z))`。重构项鼓励 decoder 还原输入；KL 项鼓励近似后验接近标准正态先验，使先验采样更有意义。\n"),
+    code(
+        "output = model(images)\n"
+        "losses = vae_loss(output['recon_logits'], images, output['mu'], output['logvar'], beta=config['beta'])\n"
+        "{name: float(value.detach().cpu()) for name, value in losses.items()}\n"
+    ),
+    markdown("## 训练一个小型 VAE\n\n这里先跑一个很小的训练流程，确认代码路径正确。正式实验会用 CLI 在 Fashion-MNIST 上跑 `beta=1` 和 `beta=0`。\n"),
+    code(
+        "optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])\n"
+        "history = []\n"
+        "for epoch in range(1, config['epochs'] + 1):\n"
+        "    train_metrics = train_one_epoch(model, train_loader, optimizer, device, beta=config['beta'])\n"
+        "    test_metrics = evaluate_epoch(model, test_loader, device, beta=config['beta'])\n"
+        "    row = {'epoch': epoch, **{f'train_{k}': v for k, v in train_metrics.items()}, **{f'test_{k}': v for k, v in test_metrics.items()}}\n"
+        "    history.append(row)\n"
+        "history\n"
+    ),
+    markdown("## 重构测试图像\n\n上面一行是原图，下面一行是重构图。刚开始训练时重构会比较模糊，这是正常现象。\n"),
+    code(
+        "figures_dir = Path(config['output_dir']) / 'figures'\n"
+        "save_reconstruction_grid(model, test_loader, device, figures_dir / 'notebook_reconstructions.png', max_images=8)\n"
+        "plt.imshow(plt.imread(figures_dir / 'notebook_reconstructions.png'))\n"
+        "plt.axis('off');\n"
+    ),
+    markdown("## 从先验分布采样\n\n训练好的 VAE 可以从 `N(0, I)` 采样 latent vector，然后用 decoder 生成图像。`beta=0` 时重构可能变好，但先验采样通常会变差，因为 encoder 学到的 latent 分布不再被约束靠近先验。\n"),
+    code(
+        "save_prior_samples(model, device, figures_dir / 'notebook_prior_samples.png', sample_count=16)\n"
+        "plt.imshow(plt.imread(figures_dir / 'notebook_prior_samples.png'))\n"
+        "plt.axis('off');\n"
+    ),
+    markdown("## beta=1 和 beta=0\n\n`beta=1` 是标准 VAE。`beta=0` 移除 KL 正则化，模型更像带随机采样的 autoencoder。基础实验会固定网络结构和训练设置，只改变 beta，然后比较重构、KL、先验采样和损失曲线。\n"),
+]
+
+
+notebook = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python", "pygments_lexer": "ipython3"},
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5,
+}
+
+
+def main() -> None:
+    output_path = Path("notebooks/01_vae_basics.ipynb")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(notebook, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(output_path)
+
+
+if __name__ == "__main__":
+    main()
