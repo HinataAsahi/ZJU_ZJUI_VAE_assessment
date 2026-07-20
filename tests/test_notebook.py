@@ -10,6 +10,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK_PATH = REPOSITORY_ROOT / "notebooks/01_vae_basics.ipynb"
 
 
+def load_notebook(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def count_unescaped_pipes(line):
     count = 0
     escaped = False
@@ -25,10 +29,17 @@ def count_unescaped_pipes(line):
     return count
 
 
+def source_cells(notebook):
+    return [
+        {"cell_type": cell["cell_type"], "source": cell.get("source", [])}
+        for cell in notebook["cells"]
+    ]
+
+
 def test_educational_notebook_exists_and_has_required_sections():
     assert NOTEBOOK_PATH.exists()
 
-    data = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
+    data = load_notebook(NOTEBOOK_PATH)
     assert data["nbformat"] == 4
     assert len(data["cells"]) >= 45
     joined_source = "\n".join("".join(cell.get("source", [])) for cell in data["cells"])
@@ -100,14 +111,21 @@ def test_educational_notebook_exists_and_has_required_sections():
     assert "最小化它等价于最大化 ELBO" in joined_source
     assert "`beta != 1`（包括本作业的 `beta=0`）" in joined_source
     assert "beta-VAE 加权目标 / 消融目标" in joined_source
-    assert all(
-        cell["execution_count"] is None and cell["outputs"] == []
-        for cell in data["cells"]
-        if cell["cell_type"] == "code"
-    )
 
 
-def test_educational_notebook_matches_generator(tmp_path):
+def test_educational_notebook_keeps_saved_learning_outputs():
+    data = load_notebook(NOTEBOOK_PATH)
+    code_cells = [cell for cell in data["cells"] if cell["cell_type"] == "code"]
+    outputs = [output for cell in code_cells for output in cell.get("outputs", [])]
+
+    assert len(code_cells) >= 15
+    assert all(cell["execution_count"] is not None for cell in code_cells)
+    assert sum(1 for cell in code_cells if cell.get("outputs")) >= 8
+    assert sum(1 for output in outputs if "image/png" in output.get("data", {})) >= 5
+    assert any("text/plain" in output.get("data", {}) for output in outputs)
+
+
+def test_educational_notebook_matches_generator_source(tmp_path):
     generator_path = REPOSITORY_ROOT / "scripts/create_educational_notebook.py"
     spec = importlib.util.spec_from_file_location("educational_notebook_generator", generator_path)
     assert spec is not None and spec.loader is not None
@@ -117,7 +135,25 @@ def test_educational_notebook_matches_generator(tmp_path):
     generated_notebook = tmp_path / "01_vae_basics.ipynb"
     generator.write_notebook(generated_notebook)
 
-    assert generated_notebook.read_bytes() == NOTEBOOK_PATH.read_bytes()
+    assert source_cells(load_notebook(generated_notebook)) == source_cells(load_notebook(NOTEBOOK_PATH))
+
+
+def test_educational_notebook_generator_writes_clean_template(tmp_path):
+    generator_path = REPOSITORY_ROOT / "scripts/create_educational_notebook.py"
+    spec = importlib.util.spec_from_file_location("educational_notebook_generator", generator_path)
+    assert spec is not None and spec.loader is not None
+    generator = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(generator)
+
+    generated_notebook = tmp_path / "01_vae_basics.ipynb"
+    generator.write_notebook(generated_notebook)
+    data = load_notebook(generated_notebook)
+
+    assert all(
+        cell["execution_count"] is None and cell["outputs"] == []
+        for cell in data["cells"]
+        if cell["cell_type"] == "code"
+    )
 
 
 def test_educational_notebook_code_cells_execute_offline_on_cpu(tmp_path):

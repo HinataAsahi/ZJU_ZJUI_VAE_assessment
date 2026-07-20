@@ -58,6 +58,14 @@ cells = [
         "if src_path not in sys.path:\n"
         "    sys.path.insert(0, src_path)\n"
         "\n"
+        "# 在 Jupyter 中启用 inline 后端，确保 Matplotlib 图像会保存到 notebook 输出里。\n"
+        "try:\n"
+        "    ipython = get_ipython()\n"
+        "except NameError:\n"
+        "    ipython = None\n"
+        "if ipython is not None:\n"
+        "    ipython.run_line_magic('matplotlib', 'inline')\n"
+        "\n"
         "import matplotlib.pyplot as plt\n"
         "from matplotlib.patches import Circle, FancyArrowPatch\n"
         "import torch\n"
@@ -67,6 +75,10 @@ cells = [
         "from vae_project.models import MLPVAE\n"
         "from vae_project.utils import select_device, set_seed\n"
         "from vae_project.visualization import save_prior_samples, save_reconstruction_grid\n"
+        "\n"
+        "# 项目可视化模块面向脚本运行会切到 Agg；notebook 中再切回 inline 以显示图片。\n"
+        "if ipython is not None:\n"
+        "    ipython.run_line_magic('matplotlib', 'inline')\n"
         "\n"
         "# 尽量使用常见中文字体；如果本机没有，Matplotlib 会自动回退。\n"
         "plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'Microsoft YaHei', 'SimHei', 'DejaVu Sans']\n"
@@ -126,6 +138,7 @@ cells = [
         "ax.text(0.15, 3.0, 'AE', fontsize=12, fontweight='bold', va='center')\n"
         "ax.text(0.15, 1.2, 'VAE', fontsize=12, fontweight='bold', va='center')\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     markdown(
         "## 概率建模直觉：`z`、`p(z)`、`q(z|x)`、`p(x|z)` 分别是什么\n\n"
@@ -204,6 +217,7 @@ cells = [
         "    axis.set_title(f'label={int(labels[index])}')\n"
         "    axis.axis('off')\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     markdown(
         "## Encoder 为什么输出 `mu` 和 `logvar`\n\n"
@@ -269,6 +283,7 @@ cells = [
         "draw_arrow(ax, (6.65, 2.0), (7.65, 2.0))\n"
         "ax.text(5.8, 0.45, '关键：随机性不直接依赖参数，梯度仍沿普通计算图回传', ha='center', fontsize=10)\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     code(
         "manual_generator = torch.Generator(device='cpu').manual_seed(7)\n"
@@ -390,6 +405,7 @@ cells = [
         "plt.imshow(plt.imread(reconstruction_path))\n"
         "plt.axis('off')\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     markdown(
         "## 先验采样图怎么看\n\n"
@@ -407,6 +423,7 @@ cells = [
         "plt.imshow(plt.imread(prior_path))\n"
         "plt.axis('off')\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     markdown(
         "## `beta=1` vs `beta=0` 运行前应该预期什么\n\n"
@@ -454,6 +471,7 @@ cells = [
         "axes[1].scatter(beta0_points[:, 0], beta0_points[:, 1], s=18, alpha=0.75, color='#DC2626')\n"
         "axes[1].text(0, -2.25, '空白区域：采样可能不可靠', ha='center', fontsize=9)\n"
         "plt.tight_layout()\n"
+        "plt.show()\n"
     ),
     markdown(
         "### 数据集切换配置\n\n"
