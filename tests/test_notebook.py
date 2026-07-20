@@ -178,6 +178,8 @@ def test_educational_notebook_code_cells_execute_offline_on_cpu(tmp_path):
         "        continue\n"
         "    source = ''.join(cell['source'])\n"
         "    exec(compile(source, f'<notebook cell {index}>', 'exec'), namespace)\n"
+        "    import matplotlib.pyplot as plt\n"
+        "    assert plt.get_fignums() == [], f'cell {index} left open Matplotlib figures'\n"
         "    executed += 1\n"
         "config = namespace['config']\n"
         "assert config['dataset'] == 'fake'\n"

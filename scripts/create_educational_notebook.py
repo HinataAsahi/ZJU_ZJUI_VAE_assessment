@@ -111,6 +111,7 @@ cells = [
         "def draw_arrow(ax, start, end):\n"
         "    ax.add_patch(FancyArrowPatch(start, end, arrowstyle='->', mutation_scale=14, linewidth=1.5))\n"
         "\n"
+        "plt.close('all')\n"
         "fig, ax = plt.subplots(figsize=(11, 4))\n"
         "ax.set_xlim(0, 10)\n"
         "ax.set_ylim(0, 4)\n"
@@ -139,6 +140,7 @@ cells = [
         "ax.text(0.15, 1.2, 'VAE', fontsize=12, fontweight='bold', va='center')\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     markdown(
         "## 概率建模直觉：`z`、`p(z)`、`q(z|x)`、`p(x|z)` 分别是什么\n\n"
@@ -211,6 +213,7 @@ cells = [
         "FakeData 的图像是用于打通流程的随机模式，不要把它误读成模型失败。切换到 MNIST 或 Fashion-MNIST 后，才应期待数字或服饰轮廓。\n"
     ),
     code(
+        "plt.close('all')\n"
         "fig, axes = plt.subplots(1, 6, figsize=(9, 2))\n"
         "for index, axis in enumerate(axes):\n"
         "    axis.imshow(images[index, 0], cmap='gray', vmin=0, vmax=1)\n"
@@ -218,6 +221,7 @@ cells = [
         "    axis.axis('off')\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     markdown(
         "## Encoder 为什么输出 `mu` 和 `logvar`\n\n"
@@ -265,6 +269,7 @@ cells = [
         "这张图把 `z = mu + std * epsilon` 拆开看：`epsilon` 负责提供随机性，`mu` 和 `std` 仍然通过普通加法、乘法影响 `z`，所以梯度可以从重构损失一路回到编码器。\n"
     ),
     code(
+        "plt.close('all')\n"
         "fig, ax = plt.subplots(figsize=(10, 4))\n"
         "ax.set_xlim(0, 10)\n"
         "ax.set_ylim(0, 4)\n"
@@ -284,6 +289,7 @@ cells = [
         "ax.text(5.8, 0.45, '关键：随机性不直接依赖参数，梯度仍沿普通计算图回传', ha='center', fontsize=10)\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     code(
         "manual_generator = torch.Generator(device='cpu').manual_seed(7)\n"
@@ -401,11 +407,13 @@ cells = [
         "figures_dir = Path(config['output_dir']) / 'figures'\n"
         "reconstruction_path = figures_dir / 'notebook_reconstructions.png'\n"
         "save_reconstruction_grid(model, test_loader, device, reconstruction_path, max_images=8)\n"
-        "plt.figure(figsize=(10, 3))\n"
+        "plt.close('all')\n"
+        "fig = plt.figure(figsize=(10, 3))\n"
         "plt.imshow(plt.imread(reconstruction_path))\n"
         "plt.axis('off')\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     markdown(
         "## 先验采样图怎么看\n\n"
@@ -419,11 +427,13 @@ cells = [
         "prior_generator = torch.Generator(device='cpu').manual_seed(config['seed'])\n"
         "prior_latents = torch.randn(16, model.latent_dim, generator=prior_generator)\n"
         "save_prior_samples(model, device, prior_path, latents=prior_latents)\n"
-        "plt.figure(figsize=(5, 5))\n"
+        "plt.close('all')\n"
+        "fig = plt.figure(figsize=(5, 5))\n"
         "plt.imshow(plt.imread(prior_path))\n"
         "plt.axis('off')\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     markdown(
         "## `beta=1` vs `beta=0` 运行前应该预期什么\n\n"
@@ -451,6 +461,7 @@ cells = [
         "    beta0_parts.append(center + torch.randn(30, 2, generator=generator) * 0.22)\n"
         "beta0_points = torch.cat(beta0_parts, dim=0)\n"
         "\n"
+        "plt.close('all')\n"
         "fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharex=True, sharey=True)\n"
         "for axis, title in zip(axes, ['beta=1：更贴近先验', 'beta=0：可能出现分散区域']):\n"
         "    axis.add_patch(Circle((0, 0), 1.0, fill=False, linestyle='--', linewidth=1.5, edgecolor='#64748B'))\n"
@@ -472,6 +483,7 @@ cells = [
         "axes[1].text(0, -2.25, '空白区域：采样可能不可靠', ha='center', fontsize=9)\n"
         "plt.tight_layout()\n"
         "plt.show()\n"
+        "plt.close(fig)\n"
     ),
     markdown(
         "### 数据集切换配置\n\n"
