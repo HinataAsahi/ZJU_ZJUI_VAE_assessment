@@ -10,6 +10,21 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK_PATH = REPOSITORY_ROOT / "notebooks/01_vae_basics.ipynb"
 
 
+def count_unescaped_pipes(line):
+    count = 0
+    escaped = False
+    for character in line:
+        if escaped:
+            escaped = False
+            continue
+        if character == "\\":
+            escaped = True
+            continue
+        if character == "|":
+            count += 1
+    return count
+
+
 def test_educational_notebook_exists_and_has_required_sections():
     assert NOTEBOOK_PATH.exists()
 
@@ -76,6 +91,10 @@ def test_educational_notebook_exists_and_has_required_sections():
     ]
     for phrase in code_comment_phrases:
         assert phrase in joined_source
+
+    for line in joined_source.splitlines():
+        if line.startswith("|"):
+            assert count_unescaped_pipes(line) == 4, line
 
     assert "`beta=1` 时，`reconstruction + KL` 是负 ELBO" in joined_source
     assert "最小化它等价于最大化 ELBO" in joined_source

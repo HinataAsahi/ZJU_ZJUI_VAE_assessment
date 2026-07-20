@@ -34,7 +34,7 @@ cells = [
         "| encoder（编码器） | 把图像压缩成潜变量分布参数的网络 | `model.encode(...)` |\n"
         "| decoder（解码器） | 把潜变量还原成图像分布参数的网络 | `model.decode(...)` |\n"
         "| latent / latent space（潜变量 / 潜空间） | 模型内部用来表示隐藏因素的低维空间 | `z`, `latent_dim` |\n"
-        "| posterior（后验分布） | 看见输入图像后，对潜变量的分布估计 | `q(z|x)`, `mu`, `logvar` |\n"
+        "| posterior（后验分布） | 看见输入图像后，对潜变量的分布估计 | `q(z\\|x)`, `mu`, `logvar` |\n"
         "| prior（先验分布） | 生成图像时不看输入、直接采样的分布 | `p(z)=N(0,I)` |\n"
         "| logits（未经过 sigmoid 的原始输出） | 还不是概率的像素分数，训练 loss 直接使用它 | `recon_logits` |\n"
         "| reconstruction（重构） | 输入图像经过编码再解码后的还原结果 | reconstruction grid |\n"
@@ -136,8 +136,8 @@ cells = [
         "| --- | --- | --- |\n"
         "| `z` | 描述图像隐藏因素的 latent vector（潜变量向量） | `output['z']` |\n"
         "| `p(z)` | 生成时使用的 prior（先验分布），通常是 `N(0, I)` | `torch.randn(...)` |\n"
-        "| `q(z|x)` | encoder（编码器）给定图像后预测的近似 posterior（后验分布） | `mu` 和 `logvar` 定义的高斯分布 |\n"
-        "| `p(x|z)` | decoder（解码器）给定 `z` 后对像素的分布 | decoder 输出的 Bernoulli logits（伯努利分布原始输出） |\n"
+        "| `q(z\\|x)` | encoder（编码器）给定图像后预测的近似 posterior（后验分布） | `mu` 和 `logvar` 定义的高斯分布 |\n"
+        "| `p(x\\|z)` | decoder（解码器）给定 `z` 后对像素的分布 | decoder 输出的 Bernoulli logits（伯努利分布原始输出） |\n"
     ),
     markdown(
         "这里的 `q` 和 `p` 不是四个独立网络。Encoder（编码器）负责给出 `q(z|x)` 的参数，decoder（解码器）负责给出 `p(x|z)` 的参数，而 `p(z)=N(0,I)` 是我们预先选择的简单分布。\n"
