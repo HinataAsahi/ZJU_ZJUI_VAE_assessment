@@ -40,6 +40,43 @@ def test_educational_notebook_exists_and_has_required_sections():
     for phrase in required_phrases:
         assert phrase in joined_source
 
+    bilingual_term_phrases = [
+        "先看术语：英文保留，中文解释",
+        "encoder（编码器）",
+        "decoder（解码器）",
+        "latent space（潜空间）",
+        "posterior（后验分布）",
+        "prior（先验分布）",
+        "logits（未经过 sigmoid 的原始输出）",
+        "forward（前向计算）",
+        "backward（反向传播）",
+        "optimizer（优化器）",
+    ]
+    for phrase in bilingual_term_phrases:
+        assert phrase in joined_source
+
+    visual_explanation_phrases = [
+        "AE 和 VAE 的结构差异图",
+        "重参数化技巧的计算路径图",
+        "beta 对潜空间和采样的影响示意图",
+        "这些图都是用 Matplotlib 在 notebook 里现场画出来的",
+    ]
+    for phrase in visual_explanation_phrases:
+        assert phrase in joined_source
+
+    code_comment_phrases = [
+        "# 逐级向上寻找仓库根目录，保证从仓库根目录或 notebooks 目录启动都能导入源码",
+        "# 这个小配置只用于离线学习和快速验证，不代表正式实验设置",
+        "# 取出一个 batch（一小批样本），先检查数据长什么样",
+        "# 编码器输出后验分布 q(z|x) 的两个参数：mu 和 logvar",
+        "# 重参数化采样：把随机性放在 epsilon 里，z 仍然能对 mu/std 求梯度",
+        "# 前向计算：图像 -> mu/logvar -> z -> recon_logits",
+        "# 反向传播：根据 total loss 计算每个参数的梯度",
+        "# 优化器更新：根据刚才算出的梯度修改模型参数",
+    ]
+    for phrase in code_comment_phrases:
+        assert phrase in joined_source
+
     assert "`beta=1` 时，`reconstruction + KL` 是负 ELBO" in joined_source
     assert "最小化它等价于最大化 ELBO" in joined_source
     assert "`beta != 1`（包括本作业的 `beta=0`）" in joined_source
