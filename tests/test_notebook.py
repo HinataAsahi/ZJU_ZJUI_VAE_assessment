@@ -46,7 +46,7 @@ def test_educational_notebook_exists_and_has_required_sections():
 
     required_phrases = [
         "从 Autoencoder 到 VAE：为什么普通 AE 不能自然生成",
-        "概率建模直觉：`z`、`p(z)`、`q(z|x)`、`p(x|z)` 分别是什么",
+        "概率建模直觉：$z$、$p(z)$、$q_\\phi(z\\mid x)$、$p_\\theta(x\\mid z)$ 分别是什么",
         "Encoder 为什么输出 `mu` 和 `logvar`",
         "重参数化技巧为什么能让采样参与反向传播",
         "ELBO 直觉：重构项和 KL 项各自在约束什么",
@@ -123,6 +123,32 @@ def test_educational_notebook_keeps_saved_learning_outputs():
     assert sum(1 for cell in code_cells if cell.get("outputs")) >= 8
     assert sum(1 for output in outputs if "image/png" in output.get("data", {})) >= 5
     assert any("text/plain" in output.get("data", {}) for output in outputs)
+
+
+def test_educational_notebook_uses_latex_for_math_symbols():
+    data = load_notebook(NOTEBOOK_PATH)
+    markdown_source = "\n".join(
+        "".join(cell.get("source", [])) for cell in data["cells"] if cell["cell_type"] == "markdown"
+    )
+
+    expected_latex_snippets = [
+        r"$z$",
+        r"$p(z)=\mathcal{N}(0,I)$",
+        r"$q_\phi(z\mid x)$",
+        r"$p_\theta(x\mid z)$",
+        r"$\mu$",
+        r"$\sigma$",
+        r"$\log\sigma^2$",
+        r"$\epsilon \sim \mathcal{N}(0,I)$",
+        r"$z = \mu + \sigma \odot \epsilon$",
+        r"$\mathrm{KL}(q_\phi(z\mid x)\,\|\,p(z))$",
+        r"$-\frac{1}{2}\sum(1 + \log\sigma^2 - \mu^2 - \sigma^2)$",
+    ]
+    for snippet in expected_latex_snippets:
+        assert snippet in markdown_source
+
+    assert "代码变量 `mu` 对应数学符号 $\\mu$" in markdown_source
+    assert "代码变量 `logvar` 对应数学符号 $\\log\\sigma^2$" in markdown_source
 
 
 def test_educational_notebook_matches_generator_source(tmp_path):

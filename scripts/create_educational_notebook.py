@@ -34,8 +34,8 @@ cells = [
         "| encoder（编码器） | 把图像压缩成潜变量分布参数的网络 | `model.encode(...)` |\n"
         "| decoder（解码器） | 把潜变量还原成图像分布参数的网络 | `model.decode(...)` |\n"
         "| latent / latent space（潜变量 / 潜空间） | 模型内部用来表示隐藏因素的低维空间 | `z`, `latent_dim` |\n"
-        "| posterior（后验分布） | 看见输入图像后，对潜变量的分布估计 | `q(z\\|x)`, `mu`, `logvar` |\n"
-        "| prior（先验分布） | 生成图像时不看输入、直接采样的分布 | `p(z)=N(0,I)` |\n"
+        "| posterior（后验分布） | 看见输入图像后，对潜变量的分布估计 | $q_\\phi(z\\mid x)$；代码变量 `mu`, `logvar` |\n"
+        "| prior（先验分布） | 生成图像时不看输入、直接采样的分布 | $p(z)=\\mathcal{N}(0,I)$ |\n"
         "| logits（未经过 sigmoid 的原始输出） | 还不是概率的像素分数，训练 loss 直接使用它 | `recon_logits` |\n"
         "| reconstruction（重构） | 输入图像经过编码再解码后的还原结果 | reconstruction grid |\n"
         "| forward（前向计算） | 从输入算到输出和 loss 的过程 | `output = model(...)` |\n"
@@ -94,7 +94,7 @@ cells = [
     ),
     markdown(
         "### AE 和 VAE 的结构差异图\n\n"
-        "这些图都是用 Matplotlib 在 notebook 里现场画出来的，不依赖外部图片文件。先看结构图：AE 的中间表示是一个确定向量；VAE 的中间表示先是分布参数 `mu/logvar`，再从这个分布中采样得到 `z`。\n"
+        "这些图都是用 Matplotlib 在 notebook 里现场画出来的，不依赖外部图片文件。先看结构图：AE 的中间表示是一个确定向量；VAE 的中间表示先是分布参数 `mu/logvar`，数学上对应 $\\mu/\\log\\sigma^2$，再从这个分布中采样得到 $z$。\n"
     ),
     code(
         "def draw_box(ax, x, y, text, facecolor='#E8F2FF'):\n"
@@ -127,7 +127,7 @@ cells = [
         "# 下半部分：VAE 的路径，先预测分布参数，再采样出 z。\n"
         "draw_box(ax, 0.9, 1.2, '输入 x\\n图像')\n"
         "draw_box(ax, 2.6, 1.2, 'encoder\\n编码器')\n"
-        "draw_box(ax, 4.3, 1.2, 'mu / logvar\\n后验分布参数', '#DCFCE7')\n"
+        "draw_box(ax, 4.3, 1.2, '$\\\\mu$ / $\\\\log\\\\sigma^2$\\n后验分布参数', '#DCFCE7')\n"
         "draw_box(ax, 6.0, 1.2, 'sample z\\n重参数化采样', '#FEF3C7')\n"
         "draw_box(ax, 7.7, 1.2, 'decoder\\n解码器')\n"
         "draw_box(ax, 9.2, 1.2, 'x_hat\\n重构图像')\n"
@@ -143,19 +143,19 @@ cells = [
         "plt.close(fig)\n"
     ),
     markdown(
-        "## 概率建模直觉：`z`、`p(z)`、`q(z|x)`、`p(x|z)` 分别是什么\n\n"
-        "VAE 把生成过程写成：先从 `p(z)` 采潜变量，再由 `p(x|z)` 生成图像。训练时只有图像 `x`，真实后验 `p(z|x)` 很难直接计算，所以用 encoder（编码器）表示的 `q(z|x)` 去近似它。\n"
+        "## 概率建模直觉：$z$、$p(z)$、$q_\\phi(z\\mid x)$、$p_\\theta(x\\mid z)$ 分别是什么\n\n"
+        "VAE 把生成过程写成：先从 prior（先验分布）$p(z)$ 采潜变量 $z$，再由 decoder（解码器）表示的 $p_\\theta(x\\mid z)$ 生成图像。训练时只有图像 $x$，真实后验 $p(z\\mid x)$ 很难直接计算，所以用 encoder（编码器）表示的 $q_\\phi(z\\mid x)$ 去近似它。\n"
     ),
     markdown(
         "| 符号 | 直觉 | 在本项目中的对应物 |\n"
         "| --- | --- | --- |\n"
-        "| `z` | 描述图像隐藏因素的 latent vector（潜变量向量） | `output['z']` |\n"
-        "| `p(z)` | 生成时使用的 prior（先验分布），通常是 `N(0, I)` | `torch.randn(...)` |\n"
-        "| `q(z\\|x)` | encoder（编码器）给定图像后预测的近似 posterior（后验分布） | `mu` 和 `logvar` 定义的高斯分布 |\n"
-        "| `p(x\\|z)` | decoder（解码器）给定 `z` 后对像素的分布 | decoder 输出的 Bernoulli logits（伯努利分布原始输出） |\n"
+        "| $z$ | 描述图像隐藏因素的 latent vector（潜变量向量） | `output['z']` |\n"
+        "| $p(z)$ | 生成时使用的 prior（先验分布），通常是 $\\mathcal{N}(0,I)$ | `torch.randn(...)` |\n"
+        "| $q_\\phi(z\\mid x)$ | encoder（编码器）给定图像后预测的近似 posterior（后验分布） | `mu` 和 `logvar` 定义的高斯分布 |\n"
+        "| $p_\\theta(x\\mid z)$ | decoder（解码器）给定 $z$ 后对像素的分布 | decoder 输出的 Bernoulli logits（伯努利分布原始输出） |\n"
     ),
     markdown(
-        "这里的 `q` 和 `p` 不是四个独立网络。Encoder（编码器）负责给出 `q(z|x)` 的参数，decoder（解码器）负责给出 `p(x|z)` 的参数，而 `p(z)=N(0,I)` 是我们预先选择的简单分布。\n"
+        "这里的 $q$ 和 $p$ 不是四个独立网络。Encoder（编码器）负责给出 $q_\\phi(z\\mid x)$ 的参数，decoder（解码器）负责给出 $p_\\theta(x\\mid z)$ 的参数，而 $p(z)=\\mathcal{N}(0,I)$ 是我们预先选择的简单分布。\n"
     ),
     markdown(
         "## 如何从 FakeData 切到 MNIST，再切到 Fashion-MNIST\n\n"
@@ -225,10 +225,10 @@ cells = [
     ),
     markdown(
         "## Encoder 为什么输出 `mu` 和 `logvar`\n\n"
-        "Encoder（编码器）是把图像变成潜变量分布参数的网络。VAE 不把一张图编码成单点，而是编码成对角高斯分布 `q(z|x)=N(mu, diag(sigma^2))`。`mu` 表示分布中心，方差表示对每个 latent dimension（潜变量维度）的不确定性。\n"
+        "Encoder（编码器）是把图像变成潜变量分布参数的网络。VAE 不把一张图编码成单点，而是编码成对角高斯分布 $q_\\phi(z\\mid x)=\\mathcal{N}(\\mu, \\mathrm{diag}(\\sigma^2))$。代码变量 `mu` 对应数学符号 $\\mu$，表示分布中心；代码变量 `logvar` 对应数学符号 $\\log\\sigma^2$，表示每个 latent dimension（潜变量维度）的对数方差。\n"
     ),
     markdown(
-        "网络输出 `logvar = log(sigma^2)` 而不是直接输出 `sigma`。这样输出可以是任意实数，不需要额外保证方差为正；需要标准差时使用 `std = exp(0.5 * logvar)`，结果自然大于零。\n"
+        "网络输出代码变量 `logvar`，数学含义是 $\\log\\sigma^2$，而不是直接输出标准差 $\\sigma$。这样输出可以是任意实数，不需要额外保证方差为正；需要标准差时使用代码 `std = exp(0.5 * logvar)`，对应 $\\sigma=\\exp(0.5\\log\\sigma^2)$，结果自然大于零。\n"
     ),
     code(
         "model = MLPVAE(\n"
@@ -259,14 +259,14 @@ cells = [
     ),
     markdown(
         "## 重参数化技巧为什么能让采样参与反向传播\n\n"
-        "如果把 `z ~ N(mu, sigma^2)` 当作一个黑盒随机操作，梯度无法说明随机样本怎样随 `mu`、`sigma` 改变。重参数化把它改写为 `epsilon ~ N(0,I)` 与 `z = mu + std * epsilon`。\n"
+        "如果把 $z \\sim \\mathcal{N}(\\mu,\\sigma^2)$ 当作一个黑盒随机操作，梯度无法说明随机样本怎样随 $\\mu$、$\\sigma$ 改变。重参数化把它改写为 $\\epsilon \\sim \\mathcal{N}(0,I)$ 与 $z = \\mu + \\sigma \\odot \\epsilon$。代码变量 `std` 对应数学符号 $\\sigma$，`epsilon` 对应 $\\epsilon$。\n"
     ),
     markdown(
-        "随机性被移到与参数无关的 `epsilon`；给定一次 `epsilon` 后，`z` 是 `mu` 和 `std` 的普通可微函数。因此 reconstruction loss 的梯度可以沿 `decoder -> z -> mu/std -> encoder` 回传。采样仍然存在，只是采样源不再包含待学习参数。\n"
+        "随机性被移到与参数无关的 $\\epsilon$；给定一次 $\\epsilon$ 后，$z$ 是 $\\mu$ 和 $\\sigma$ 的普通可微函数。因此 reconstruction loss 的梯度可以沿 `decoder -> z -> mu/std -> encoder` 回传。采样仍然存在，只是采样源不再包含待学习参数。\n"
     ),
     markdown(
         "### 重参数化技巧的计算路径图\n\n"
-        "这张图把 `z = mu + std * epsilon` 拆开看：`epsilon` 负责提供随机性，`mu` 和 `std` 仍然通过普通加法、乘法影响 `z`，所以梯度可以从重构损失一路回到编码器。\n"
+        "这张图把 $z = \\mu + \\sigma \\odot \\epsilon$ 拆开看：$\\epsilon$ 负责提供随机性，$\\mu$ 和 $\\sigma$ 仍然通过普通加法、乘法影响 $z$，所以梯度可以从重构损失一路回到编码器。\n"
     ),
     code(
         "plt.close('all')\n"
@@ -276,10 +276,10 @@ cells = [
         "ax.axis('off')\n"
         "\n"
         "# 重参数化图：epsilon 是随机源，mu/std 是 encoder 输出的可学习路径。\n"
-        "draw_box(ax, 1.1, 3.0, 'epsilon\\n标准正态噪声', '#E0F2FE')\n"
-        "draw_box(ax, 1.1, 1.0, 'mu, logvar\\n编码器输出', '#DCFCE7')\n"
-        "draw_box(ax, 3.4, 1.0, 'std = exp(0.5 logvar)\\n标准差', '#FDE68A')\n"
-        "draw_box(ax, 5.8, 2.0, 'z = mu + std * epsilon\\n可微采样结果', '#FEF3C7')\n"
+        "draw_box(ax, 1.1, 3.0, '$\\\\epsilon$\\n标准正态噪声', '#E0F2FE')\n"
+        "draw_box(ax, 1.1, 1.0, '$\\\\mu$, $\\\\log\\\\sigma^2$\\n编码器输出', '#DCFCE7')\n"
+        "draw_box(ax, 3.4, 1.0, '$\\\\sigma = \\\\exp(0.5\\\\log\\\\sigma^2)$\\n标准差', '#FDE68A')\n"
+        "draw_box(ax, 5.8, 2.0, '$z = \\\\mu + \\\\sigma \\\\odot \\\\epsilon$\\n可微采样结果', '#FEF3C7')\n"
         "draw_box(ax, 8.5, 2.0, 'decoder -> loss\\n解码并计算损失', '#E8F2FF')\n"
         "\n"
         "draw_arrow(ax, (1.8, 3.0), (5.0, 2.25))\n"
@@ -300,7 +300,7 @@ cells = [
     markdown(
         "## ELBO 直觉：重构项和 KL 项各自在约束什么\n\n"
         "ELBO（evidence lower bound，证据下界）是 VAE 推导里的核心目标。实际训练常最小化它的相反数，也就是负 ELBO。\n\n"
-        "当 `beta=1` 时，`reconstruction + KL` 是负 ELBO：这里的 reconstruction（重构项）是负对数似然（本项目用 BCE 计算），所以最小化它等价于最大化 ELBO。两个项会拉扯：重构项希望每个 `z` 保留足够多的输入细节；KL 项希望每个 `q(z|x)` 不要偏离统一的先验 `N(0,I)` 太远。\n\n"
+        "当 `beta=1` 时，`reconstruction + KL` 是负 ELBO：这里的 reconstruction（重构项）是负对数似然（本项目用 BCE 计算），所以最小化它等价于最大化 ELBO。其中 KL 项写作 $\\mathrm{KL}(q_\\phi(z\\mid x)\\,\\|\\,p(z))$。两个项会拉扯：重构项希望每个 $z$ 保留足够多的输入细节；KL 项希望每个 $q_\\phi(z\\mid x)$ 不要偏离统一的先验 $p(z)=\\mathcal{N}(0,I)$ 太远。\n\n"
         "当 `beta != 1`（包括本作业的 `beta=0`）时，`reconstruction + beta * KL` 是 beta-VAE 加权目标 / 消融目标，不是标准 ELBO。它仍然是有用的训练目标，但其目的变为刻意改变重构与先验对齐之间的权衡。\n"
     ),
     markdown(
@@ -317,12 +317,12 @@ cells = [
     ),
     markdown(
         "## KL 公式和代码如何对应\n\n"
-        "对角高斯 `q(z|x)=N(mu, diag(sigma^2))` 与标准正态先验的 KL 为：\n\n"
-        "`KL = -0.5 * sum(1 + logvar - mu^2 - exp(logvar))`。\n\n"
-        "代码先对 latent dimensions（潜变量维度）求和得到每个样本的 KL，再对 batch（一小批样本）求平均。\n"
+        "对角高斯 $q_\\phi(z\\mid x)=\\mathcal{N}(\\mu, \\mathrm{diag}(\\sigma^2))$ 与标准正态先验 $p(z)=\\mathcal{N}(0,I)$ 的 KL 为：\n\n"
+        "$$\\mathrm{KL}= -\\frac{1}{2}\\sum(1 + \\log\\sigma^2 - \\mu^2 - \\sigma^2)$$\n\n"
+        "核心求和部分也可写成 $-\\frac{1}{2}\\sum(1 + \\log\\sigma^2 - \\mu^2 - \\sigma^2)$。代码实现对应 `KL = -0.5 * sum(1 + logvar - mu^2 - exp(logvar))`，先对 latent dimensions（潜变量维度）求和得到每个样本的 KL，再对 batch（一小批样本）求平均。\n"
     ),
     markdown(
-        "公式中的 `1` 是常数；`logvar` 对应 `log(sigma^2)`；`mu.pow(2)` 惩罚均值偏离 0；`logvar.exp()` 还原方差并惩罚它偏离 1。若 `mu=0` 且 `logvar=0`，则方差为 1，每一维括号内恰好为 0。\n"
+        "公式中的 `1` 是常数；`logvar` 对应 $\\log\\sigma^2$；`mu.pow(2)` 对应 $\\mu^2$，惩罚均值偏离 0；`logvar.exp()` 对应 $\\sigma^2$，还原方差并惩罚它偏离 1。若 `mu=0` 且 `logvar=0`，则 $\\mu=0$、$\\sigma^2=1$，每一维括号内恰好为 0。\n"
     ),
     code(
         "standard_mu = torch.zeros(1, 4)\n"
@@ -417,7 +417,7 @@ cells = [
     ),
     markdown(
         "## 先验采样图怎么看\n\n"
-        "先验采样不提供输入图像，而是直接取 `z ~ N(0,I)` 再 decode（解码）。它检验的是训练得到的 latent space（潜空间）是否与生成时使用的先验对齐，所以比重构更直接地反映 VAE 的生成能力。\n"
+        "先验采样不提供输入图像，而是直接取 $z \\sim \\mathcal{N}(0,I)$ 再 decode（解码）。它检验的是训练得到的 latent space（潜空间）是否与生成时使用的先验对齐，所以比重构更直接地反映 VAE 的生成能力。\n"
     ),
     markdown(
         "观察时看三点：单张样本是否像数据分布；不同格子是否有多样性；是否存在大量噪声或几乎相同的输出。FakeData 没有稳定语义，正式判断必须使用训练充分的 Fashion-MNIST 模型。\n"
@@ -445,7 +445,7 @@ cells = [
         "| reconstruction（重构误差） | 可能略差 | 可能更好 |\n"
         "| KL | 被纳入优化，通常受控 | 仍可计算，但没有梯度权重，可能漂移 |\n"
         "| prior samples（先验采样图） | 更可能形成可识别且连续的样本 | 可能差，即使重构很好 |\n"
-        "| latent space（潜空间） | 更接近 `N(0,I)` | 只服务于重构，没有先验对齐保证 |\n\n"
+        "| latent space（潜空间） | 更接近 $p(z)=\\mathcal{N}(0,I)$ | 只服务于重构，没有先验对齐保证 |\n\n"
         "这些是运行前的假设，不是必须出现的结论；最终要用 loss 曲线、重构网格和先验采样网格共同验证。\n"
     ),
     markdown(
@@ -499,20 +499,20 @@ cells = [
     ),
     markdown(
         "## 常见问题：posterior collapse、KL 太小/太大、采样差但重构好\n\n"
-        "**Posterior collapse（后验塌陷）** 指 encoder（编码器）的 `q(z|x)` 几乎退化为与输入无关的先验，decoder（解码器）很少使用 `z`。典型信号是 KL 长期接近 0、不同输入的 `mu` 很相似，以及改变 `z` 对输出影响很小。\n"
+        "**Posterior collapse（后验塌陷）** 指 encoder（编码器）的 $q_\\phi(z\\mid x)$ 几乎退化为与输入无关的先验，decoder（解码器）很少使用 $z$。典型信号是 KL 长期接近 0、不同输入的 `mu` 很相似，以及改变 $z$ 对输出影响很小。\n"
     ),
     markdown(
         "- **KL 太小**：先确认 decoder（解码器）是否忽略 `z`、beta 是否过强、训练是否充分。KL 小不总是好事。\n"
         "- **KL 太大**：posterior（后验分布）与先验偏离明显；检查 loss reduction（损失归约方式）、输入范围、学习率和 beta。\n"
-        "- **采样差但重构好**：常见于 `beta=0` 或先验对齐不足。重构使用 `q(z|x)` 附近的点，而生成使用 `p(z)` 的点，两者可能不在同一区域。\n"
+        "- **采样差但重构好**：常见于 `beta=0` 或先验对齐不足。重构使用 $q_\\phi(z\\mid x)$ 附近的点，而生成使用 $p(z)$ 的点，两者可能不在同一区域。\n"
         "- **所有样本很像**：检查训练不足、模型容量、数据问题，也要结合 KL 判断是否 collapse。\n"
     ),
     markdown(
         "## 读完后你应该能回答的问题\n\n"
         "1. 普通 AE 的 latent space（潜空间）为什么不能保证随机采样有效？\n"
-        "2. `p(z)`、`q(z|x)` 和 `p(x|z)` 分别由什么定义？\n"
+        "2. $p(z)$、$q_\\phi(z\\mid x)$ 和 $p_\\theta(x\\mid z)$ 分别由什么定义？\n"
         "3. 为什么 encoder（编码器）输出 `logvar`，而不是直接输出标准差？\n"
-        "4. `z = mu + std * epsilon` 为什么保留了到 encoder（编码器）的梯度路径？\n"
+        "4. $z = \\mu + \\sigma \\odot \\epsilon$ 为什么保留了到 encoder（编码器）的梯度路径？\n"
         "5. KL 为 0 在数学上意味着什么？训练中 KL 长期接近 0 又可能意味着什么？\n"
         "6. 为什么 loss（损失函数）接收 logits（未经过 sigmoid 的原始输出），而可视化必须使用 sigmoid 后的值？\n"
         "7. 一个训练 batch（一小批样本）中 forward（前向计算）、loss（损失计算）、backward（反向传播）、optimizer（优化器）的顺序是什么？\n"
@@ -522,7 +522,7 @@ cells = [
     ),
     markdown(
         "### 答辩前最后自检\n\n"
-        "不要只背公式。尝试用一张图的路径讲完整故事：`x -> mu/logvar -> z -> logits -> reconstruction loss`，也就是“输入图像 -> 后验分布参数 -> 潜变量 -> 原始像素输出 -> 重构损失”。再解释 KL 怎样让这条重构路径与 `z ~ N(0,I)` 的生成路径连接起来。最后用 `beta=0` 的反例说明为什么“重构好”不等于“会生成”。\n"
+        "不要只背公式。尝试用一张图的路径讲完整故事：`x -> mu/logvar -> z -> logits -> reconstruction loss`，也就是“输入图像 -> 后验分布参数 -> 潜变量 -> 原始像素输出 -> 重构损失”。再解释 KL 怎样让这条重构路径与 $z \\sim \\mathcal{N}(0,I)$ 的生成路径连接起来。最后用 `beta=0` 的反例说明为什么“重构好”不等于“会生成”。\n"
     ),
 ]
 
