@@ -26,7 +26,7 @@ class RunSummary:
 
 
 def load_run_summary(run_dir: str | Path) -> RunSummary:
-    path = Path(run_dir)
+    path = _resolve_run_dir(Path(run_dir))
     config = load_json(path / "config.json")
     metrics = load_json(path / "metrics.json")
     evaluation = load_json(path / "evaluation.json") if (path / "evaluation.json").exists() else {}
@@ -96,6 +96,19 @@ def compare_runs(run_dirs: Iterable[str | Path], title: str = "VAE Run Compariso
         key=lambda summary: (summary.beta, summary.run_name),
     )
     return build_markdown(summaries, title=title)
+
+
+def _resolve_run_dir(path: Path) -> Path:
+    if (path / "config.json").exists() and (path / "metrics.json").exists():
+        return path
+    candidates = [
+        child
+        for child in path.iterdir()
+        if child.is_dir() and (child / "config.json").exists() and (child / "metrics.json").exists()
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    return path
 
 
 def _latest_history_row(metrics: dict[str, Any]) -> dict[str, Any]:

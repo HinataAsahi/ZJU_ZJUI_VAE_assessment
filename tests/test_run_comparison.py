@@ -63,6 +63,18 @@ def test_load_run_summary_reads_config_metrics_and_evaluation(tmp_path):
     assert summary.device == "cuda"
 
 
+def test_load_run_summary_accepts_outer_directory_with_one_nested_run(tmp_path):
+    outer_dir = tmp_path / "copied_output"
+    run_dir = make_run(outer_dir, "fashion_mnist_beta0_1", beta=0.1, reconstruction=215.64, kl=37.26)
+
+    summary = load_run_summary(outer_dir)
+
+    assert summary.run_dir == run_dir
+    assert summary.run_name == "fashion_mnist_beta0_1"
+    assert summary.beta == 0.1
+    assert summary.test_reconstruction == 215.64
+
+
 def test_build_markdown_includes_run_table_and_figure_paths(tmp_path):
     beta1 = make_run(tmp_path, "fashion_mnist_beta1", beta=1.0, reconstruction=228.38, kl=12.19)
     beta0 = make_run(tmp_path, "fashion_mnist_beta0", beta=0.0, reconstruction=214.24, kl=297.92)
