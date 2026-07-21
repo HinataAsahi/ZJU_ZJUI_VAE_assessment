@@ -91,7 +91,11 @@ def build_markdown(summaries: Iterable[RunSummary], title: str = "VAE Run Compar
 
 
 def compare_runs(run_dirs: Iterable[str | Path], title: str = "VAE Run Comparison") -> str:
-    return build_markdown([load_run_summary(run_dir) for run_dir in run_dirs], title=title)
+    summaries = sorted(
+        (load_run_summary(run_dir) for run_dir in run_dirs),
+        key=lambda summary: (summary.beta, summary.run_name),
+    )
+    return build_markdown(summaries, title=title)
 
 
 def _latest_history_row(metrics: dict[str, Any]) -> dict[str, Any]:

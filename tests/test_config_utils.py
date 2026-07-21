@@ -47,6 +47,48 @@ def test_load_config_reads_yaml(tmp_path):
     assert config["latent_dim"] == 2
 
 
+def test_fashion_mnist_beta_sweep_configs_share_core_settings():
+    config_paths = [
+        Path("configs/fashion_mnist_beta0.yaml"),
+        Path("configs/fashion_mnist_beta0_1.yaml"),
+        Path("configs/fashion_mnist_beta0_5.yaml"),
+        Path("configs/fashion_mnist_beta1.yaml"),
+        Path("configs/fashion_mnist_beta2.yaml"),
+        Path("configs/fashion_mnist_beta4.yaml"),
+    ]
+    configs = [load_config(path) for path in config_paths]
+
+    assert [config["beta"] for config in configs] == [0.0, 0.1, 0.5, 1.0, 2.0, 4.0]
+    assert [config["run_name"] for config in configs] == [
+        "fashion_mnist_beta0",
+        "fashion_mnist_beta0_1",
+        "fashion_mnist_beta0_5",
+        "fashion_mnist_beta1",
+        "fashion_mnist_beta2",
+        "fashion_mnist_beta4",
+    ]
+    shared_keys = [
+        "dataset",
+        "data_dir",
+        "batch_size",
+        "epochs",
+        "learning_rate",
+        "seed",
+        "device",
+        "latent_dim",
+        "hidden_dims",
+        "train_limit",
+        "test_limit",
+        "num_workers",
+        "download",
+        "sample_count",
+    ]
+    baseline = configs[0]
+    for config in configs[1:]:
+        for key in shared_keys:
+            assert config[key] == baseline[key]
+
+
 def test_seed_makes_torch_random_repeatable():
     set_seed(123)
     first = torch.rand(3)

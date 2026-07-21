@@ -83,6 +83,48 @@ PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0.yaml
 PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0 --device auto
 ```
 
+## Beta Sweep Exploration
+
+After the baseline comparison, run a focused beta sweep to study how the KL weight changes reconstruction loss, KL loss, and prior sampling quality. The repository provides:
+
+```text
+configs/fashion_mnist_beta0.yaml
+configs/fashion_mnist_beta0_1.yaml
+configs/fashion_mnist_beta0_5.yaml
+configs/fashion_mnist_beta1.yaml
+configs/fashion_mnist_beta2.yaml
+configs/fashion_mnist_beta4.yaml
+```
+
+Additional experiment commands:
+
+```bash
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0_1.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0_1 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0_5.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0_5 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta2.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta2 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta4.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta4 --device auto
+```
+
+After copying the output directories back, summarize all runs with:
+
+```bash
+PYTHONPATH=src python scripts/compare_runs.py \
+  outputs/fashion_mnist_beta0 \
+  outputs/fashion_mnist_beta0_1 \
+  outputs/fashion_mnist_beta0_5 \
+  outputs/fashion_mnist_beta1 \
+  outputs/fashion_mnist_beta2 \
+  outputs/fashion_mnist_beta4 \
+  --title "Fashion-MNIST beta sweep"
+```
+
 ## Tests
 
 ```bash

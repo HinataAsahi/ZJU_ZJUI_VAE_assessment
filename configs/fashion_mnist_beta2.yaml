@@ -1,0 +1,17 @@
+run_name: fashion_mnist_beta2
+dataset: fashion_mnist
+data_dir: data
+output_dir: outputs/fashion_mnist_beta2
+batch_size: 128
+epochs: 20
+learning_rate: 0.001
+seed: 42
+device: auto
+beta: 2.0
+latent_dim: 16
+hidden_dims: [400, 200]
+train_limit:
+test_limit:
+num_workers: 2
+download: true
+sample_count: 64

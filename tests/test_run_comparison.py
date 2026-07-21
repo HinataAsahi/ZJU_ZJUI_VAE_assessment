@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from vae_project.comparison import build_markdown, load_run_summary
+from vae_project.comparison import build_markdown, compare_runs, load_run_summary
 from vae_project.utils import save_json
 
 
@@ -107,3 +107,16 @@ def test_compare_runs_cli_writes_markdown_file(tmp_path):
     assert "| fashion_mnist_beta0 | fashion_mnist | 0.0 | 20 | 214.24 | 297.92 | 214.24 |" in output_path.read_text(
         encoding="utf-8"
     )
+
+
+def test_compare_runs_sorts_summaries_by_beta(tmp_path):
+    beta1 = make_run(tmp_path, "fashion_mnist_beta1", beta=1.0, reconstruction=228.38, kl=12.19)
+    beta01 = make_run(tmp_path, "fashion_mnist_beta0_1", beta=0.1, reconstruction=216.0, kl=120.0)
+    beta4 = make_run(tmp_path, "fashion_mnist_beta4", beta=4.0, reconstruction=245.0, kl=5.0)
+
+    markdown = compare_runs([beta4, beta1, beta01], title="Beta sweep")
+
+    beta01_index = markdown.index("| fashion_mnist_beta0_1 |")
+    beta1_index = markdown.index("| fashion_mnist_beta1 |")
+    beta4_index = markdown.index("| fashion_mnist_beta4 |")
+    assert beta01_index < beta1_index < beta4_index

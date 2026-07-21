@@ -83,6 +83,48 @@ PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0.yaml
 PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0 --device auto
 ```
 
+## β 系数扫描开放探索
+
+基础实验之后，可以继续运行一组更细的 `beta` 扫描，用来观察 KL 权重如何影响重构误差、KL 大小和先验采样质量。当前已提供：
+
+```text
+configs/fashion_mnist_beta0.yaml
+configs/fashion_mnist_beta0_1.yaml
+configs/fashion_mnist_beta0_5.yaml
+configs/fashion_mnist_beta1.yaml
+configs/fashion_mnist_beta2.yaml
+configs/fashion_mnist_beta4.yaml
+```
+
+新增实验命令：
+
+```bash
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0_1.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0_1 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta0_5.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta0_5 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta2.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta2 --device auto
+
+PYTHONPATH=src python scripts/train.py --config configs/fashion_mnist_beta4.yaml --device auto
+PYTHONPATH=src python scripts/evaluate.py --run-dir outputs/fashion_mnist_beta4 --device auto
+```
+
+复制结果回来后，可用对比脚本汇总所有 run：
+
+```bash
+PYTHONPATH=src python scripts/compare_runs.py \
+  outputs/fashion_mnist_beta0 \
+  outputs/fashion_mnist_beta0_1 \
+  outputs/fashion_mnist_beta0_5 \
+  outputs/fashion_mnist_beta1 \
+  outputs/fashion_mnist_beta2 \
+  outputs/fashion_mnist_beta4 \
+  --title "Fashion-MNIST beta sweep"
+```
+
 如果本机 CUDA 环境没有被识别，可以先在 Python 中检查：
 
 ```bash
@@ -119,11 +161,12 @@ PYTHONPATH=src pytest -v
 
 1. 学完 `notebooks/01_vae_basics.ipynb`；
 2. 跑通 `mnist_smoke.yaml`；
-3. 在 4060 笔记本上运行两个 Fashion-MNIST 配置；
+3. 在 4060 笔记本上运行两个 Fashion-MNIST 基础配置；
 4. 对比 `beta=1` 和 `beta=0` 的指标与图片；
-5. 学完基础后，再决定开放探索主题。
+5. 运行 `beta=0.1, 0.5, 2, 4` 的开放探索配置；
+6. 汇总并分析不同 KL 权重下的趋势。
 
-开放探索可以暂时不急着选。先把 VAE 的概率建模直觉、重参数化、KL 项作用和基础实验链路弄清楚，会让后面的选题更稳。
+当前开放探索主题是 β 系数扫描。重点不是追求最漂亮的图片，而是解释 reconstruction loss、KL loss 和 prior samples 随 KL 权重变化的趋势。
 
 ## Git 和文件规范
 
