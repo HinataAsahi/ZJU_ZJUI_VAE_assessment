@@ -141,6 +141,28 @@ PYTHONPATH=src pytest -v
 
 当前测试覆盖了配置读取、数据加载、VAE 前向传播、损失函数、训练/评估 smoke test、可视化输出，以及学习 notebook 的基本可执行性。
 
+## 报告与提交材料
+
+最终项目报告：
+
+```text
+reports/final_project_report.pdf
+reports/final_project_report.md
+```
+
+阶段性分析报告保留在：
+
+```text
+reports/baseline_observations.pdf
+reports/beta_sweep_observations.pdf
+```
+
+提交前检查和打包建议见：
+
+```text
+SUBMISSION.md
+```
+
 ## 实验结果应该怎么比较
 
 报告中建议重点比较：

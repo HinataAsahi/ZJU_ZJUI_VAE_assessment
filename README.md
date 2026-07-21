@@ -131,6 +131,28 @@ PYTHONPATH=src python scripts/compare_runs.py \
 PYTHONPATH=src pytest -v
 ```
 
+## Reports And Submission
+
+Final project report:
+
+```text
+reports/final_project_report.pdf
+reports/final_project_report.md
+```
+
+Supplementary stage reports:
+
+```text
+reports/baseline_observations.pdf
+reports/beta_sweep_observations.pdf
+```
+
+Submission checklist and clean zip guidance:
+
+```text
+SUBMISSION.md
+```
+
 ## Notes For The Report
 
 The report should compare `beta=1` and `beta=0` using:
