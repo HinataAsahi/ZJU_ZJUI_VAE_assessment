@@ -1,8 +1,8 @@
-# Fashion-MNIST Baseline Observations
+# Fashion-MNIST 基线实验观察
 
 本文记录 MLP VAE 在 Fashion-MNIST 上的基础对照实验。目标是比较标准 VAE (`beta=1`) 与去除 KL 正则的消融设置 (`beta=0`)，观察 KL 项对重构质量、潜空间约束和先验采样质量的影响。
 
-## Experiment Setup
+## 实验设置
 
 两组实验保持主要设置一致，只改变 `beta`：
 
@@ -23,7 +23,7 @@
 - `configs/fashion_mnist_beta1.yaml`
 - `configs/fashion_mnist_beta0.yaml`
 
-## Metric Summary
+## 指标汇总
 
 指标表由 `scripts/compare_runs.py` 从 `outputs/*/evaluation.json` 和 `outputs/*/metrics.json` 读取生成。
 
@@ -34,7 +34,7 @@
 
 不同 `beta` 下的 `test_total` 不适合直接比较，因为 `test_total = reconstruction + beta * KL`。更有意义的是分别比较 reconstruction loss、KL loss 和生成图像质量。
 
-## Reconstruction Observations
+## 重构结果观察
 
 `beta=0` 的重构图比 `beta=1` 更清晰，轮廓和局部对比度更接近输入图像。这与指标一致：`beta=0` 的 test reconstruction loss 更低。
 
@@ -45,7 +45,7 @@
 - `outputs/fashion_mnist_beta1/figures/reconstructions.png`
 - `outputs/fashion_mnist_beta0/figures/reconstructions.png`
 
-## Prior Sampling Observations
+## 先验采样观察
 
 从标准正态先验 `N(0, I)` 采样时，`beta=1` 生成的图像中有较多可识别的衣物轮廓，例如上衣、裤子、鞋子和包。虽然细节仍然有限，但整体更接近 Fashion-MNIST 的数据分布。
 
@@ -56,7 +56,7 @@
 - `outputs/fashion_mnist_beta1/figures/prior_samples.png`
 - `outputs/fashion_mnist_beta0/figures/prior_samples.png`
 
-## Loss Curve Observations
+## 损失曲线观察
 
 `beta=1` 中，test KL 维持在约 `12` 附近，说明 KL 正则持续约束 latent distribution。重构损失从前几轮快速下降，后期趋于平缓。
 
@@ -67,7 +67,7 @@
 - `outputs/fashion_mnist_beta1/figures/loss_curves.png`
 - `outputs/fashion_mnist_beta0/figures/loss_curves.png`
 
-## Interpretation
+## 结果解释
 
 这组实验体现了 VAE 的核心 trade-off：
 
@@ -77,7 +77,7 @@
 
 因此，`beta=0` 并不是更好的生成模型。它在重构任务上更强，但在 generative sampling 上更弱。
 
-## Limitations and Next Steps
+## 局限性与下一步
 
 当前基础实验只比较了 `beta=1` 和 `beta=0` 两个端点，足以说明 KL 项的作用，但还不能完整刻画不同正则强度之间的连续变化。
 
